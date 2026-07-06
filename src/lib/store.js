@@ -69,17 +69,48 @@ export async function loadProgress() {
       .maybeSingle()
 
     if (error) throw error
-    if (!data?.state) return local
+
+    const localHasData = Object.keys(local.days || {}).length > 0
+
+    // Cloud row missing/empty: if this device has progress, seed the cloud with it
+    // (recovers a device that was tracking before cloud sync was turned on).
+    if (!data?.state) {
+      if (localHasData) await pushToCloud(key, local)
+      return local
+    }
 
     const cloud = data.state
     const cloudTime = new Date(data.updated_at || cloud.updatedAt || 0).getTime()
     const localTime = new Date(local.updatedAt || 0).getTime()
-    const winner = cloudTime >= localTime ? cloud : local
-    writeLocal(winner)
-    return winner
+
+    if (localTime > cloudTime && localHasData) {
+      // This device is ahead of the cloud — upload it so other devices catch up.
+      await pushToCloud(key, local)
+      writeLocal(local)
+      return local
+    }
+
+    // Cloud is the source of truth (equal or newer).
+    writeLocal(cloud)
+    return cloud
   } catch (err) {
     console.warn('[store] cloud load failed, using local copy:', err.message)
     return local
+  }
+}
+
+// Upsert a state to the cloud WITHOUT changing its timestamp (used to seed/catch-up
+// the cloud from a local copy). Preserves the state's own updatedAt for correct
+// "who is newer" comparisons on other devices.
+async function pushToCloud(key, state) {
+  try {
+    const updatedAt = state.updatedAt || new Date().toISOString()
+    const { error } = await supabase
+      .from('progress')
+      .upsert({ learner_key: key, state: { ...state, updatedAt }, updated_at: updatedAt }, { onConflict: 'learner_key' })
+    if (error) throw error
+  } catch (err) {
+    console.warn('[store] cloud seed/catch-up failed:', err.message)
   }
 }
 
