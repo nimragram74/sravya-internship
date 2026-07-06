@@ -57,6 +57,27 @@ export default function MentorView({ state, stats, sync, refresh }) {
     return { completions, notes, workedToday, lastActive, lastCompletion, strip, completionDates }
   }, [state])
 
+  // Compose a short WhatsApp-ready message and open the share sheet.
+  const shareToWhatsApp = () => {
+    const today = todayISO()
+    const doneToday = info.completions.filter((c) => c.doneAt === today)
+    const nextDay = allDays.find((d) => !state.days[d.id]?.done)
+    const dateLabel = new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })
+    const lines = [
+      `🌱 *Sravya — Daily Update*`,
+      `${dateLabel}`,
+      ``,
+      doneToday.length ? `✅ Today: ${doneToday.length} lab(s) done — ${doneToday.map((c) => c.id).join(', ')}` : `⚠️ Today: no lab completed yet`,
+      `🔥 Streak: ${stats.streak} day${stats.streak === 1 ? '' : 's'}`,
+      `📊 Progress: ${stats.completed}/${stats.total} days (${stats.pct}%)`,
+      nextDay ? `👉 Next up: Day ${nextDay.id} — ${nextDay.focus}` : `🎉 All ${stats.total} days complete!`,
+      ``,
+      `Open: https://sravya-internship.vercel.app/`,
+    ]
+    const url = `https://wa.me/?text=${encodeURIComponent(lines.join('\n'))}`
+    window.open(url, '_blank', 'noopener')
+  }
+
   // Status light: green if worked today, amber if within the last 2 days, red otherwise.
   const sinceCompletion = daysAgo(info.lastCompletion)
   let light = 'red'
@@ -81,9 +102,17 @@ export default function MentorView({ state, stats, sync, refresh }) {
       <div className="eyebrow">For the mentor</div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
         <h2 className="section-title" style={{ marginBottom: 4 }}>How is Sravya doing?</h2>
-        <button className="btn ghost sm" onClick={refresh} title="Fetch the latest from the cloud">
-          ↻ Refresh
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn ghost sm" onClick={refresh} title="Fetch the latest from the cloud">
+            ↻ Refresh
+          </button>
+          <button className="btn sm wa-btn" onClick={shareToWhatsApp} title="Send today's summary on WhatsApp">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true" style={{ marginRight: 6, verticalAlign: '-2px' }}>
+              <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.9c0 2.1.55 4.15 1.6 5.96L2 22l4.28-1.12a9.9 9.9 0 0 0 5.76 1.84h.01c5.46 0 9.9-4.45 9.9-9.9 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 1.8c2.16 0 4.19.84 5.72 2.37a8.03 8.03 0 0 1 2.37 5.73c0 4.47-3.64 8.1-8.1 8.1a8.1 8.1 0 0 1-4.13-1.13l-.3-.18-2.54.67.68-2.48-.2-.32a8.07 8.07 0 0 1-1.24-4.3c0-4.46 3.63-8.1 8.08-8.1Zm4.66 10.2c-.25-.13-1.47-.72-1.7-.8-.23-.09-.4-.13-.56.12-.17.25-.64.8-.79.97-.14.17-.29.19-.54.06-.25-.13-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.42l-.48-.01c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.23.9 2.43 1.03 2.6.13.17 1.78 2.72 4.3 3.81.6.26 1.07.42 1.44.53.6.2 1.15.17 1.58.1.48-.07 1.47-.6 1.68-1.18.2-.58.2-1.07.14-1.18-.06-.11-.23-.17-.48-.29Z" />
+            </svg>
+            WhatsApp
+          </button>
+        </div>
       </div>
       <p className="lead">
         A quick read on daily activity.{' '}
