@@ -17,8 +17,10 @@ create table if not exists public.progress (
 -- and study notes.) If you later add real auth, tighten these policies.
 alter table public.progress enable row level security;
 
-drop policy if exists "anon can read progress"  on public.progress;
-drop policy if exists "anon can write progress" on public.progress;
+drop policy if exists "anon can read progress"   on public.progress;
+drop policy if exists "anon can write progress"  on public.progress;
+drop policy if exists "anon can update progress" on public.progress;
+drop policy if exists "anon can delete progress" on public.progress;
 
 create policy "anon can read progress"
   on public.progress for select
@@ -35,3 +37,8 @@ create policy "anon can update progress"
   to anon
   using (true)
   with check (true);
+
+create policy "anon can delete progress"
+  on public.progress for delete
+  to anon
+  using (true);
