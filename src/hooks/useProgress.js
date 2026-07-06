@@ -10,6 +10,7 @@ export function useProgress() {
   const [loading, setLoading] = useState(true)
   const [sync, setSync] = useState({ status: isSupabaseConfigured ? 'cloud' : 'local', savedAt: null })
   const saveTimer = useRef(null)
+  const skipSave = useRef(false)
 
   // Initial load (cloud + local merge).
   useEffect(() => {
@@ -30,6 +31,12 @@ export function useProgress() {
     if (loading) return
     if (firstRun.current) {
       firstRun.current = false
+      return
+    }
+    // A cloud refresh replaced state with server data — don't write it back
+    // (that would reset "last active" to now and hide her real activity).
+    if (skipSave.current) {
+      skipSave.current = false
       return
     }
     setSync((s) => ({ ...s, status: 'saving' }))
@@ -69,9 +76,18 @@ export function useProgress() {
     setState(emptyState())
   }, [])
 
+  // Pull the latest from the cloud (used by the Mentor view's refresh button).
+  const refresh = useCallback(async () => {
+    setSync((s) => ({ ...s, status: 'saving' }))
+    const s = await loadProgress()
+    skipSave.current = true
+    setState(s)
+    setSync({ status: isSupabaseConfigured ? 'cloud' : 'local', savedAt: new Date().toISOString() })
+  }, [])
+
   const stats = useMemo(() => computeStats(state), [state])
 
-  return { state, loading, sync, stats, toggleDay, setNote, setStartDate, resetAll }
+  return { state, loading, sync, stats, toggleDay, setNote, setStartDate, resetAll, refresh }
 }
 
 function computeStats(state) {

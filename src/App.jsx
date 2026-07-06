@@ -5,12 +5,14 @@ import WeeksView from './components/WeeksView'
 import Reference from './components/Reference'
 import Certificate from './components/Certificate'
 import Settings from './components/Settings'
+import MentorView from './components/MentorView'
 
 const TABS = [
   { id: 'home', label: 'Dashboard' },
   { id: 'weeks', label: 'The Path' },
   { id: 'reference', label: 'Reference' },
   { id: 'certificate', label: 'Certificate' },
+  { id: 'mentor', label: 'Mentor' },
   { id: 'settings', label: 'Settings' },
 ]
 
@@ -31,7 +33,7 @@ function SyncPill({ sync }) {
 }
 
 export default function App() {
-  const { state, loading, sync, stats, toggleDay, setNote, setStartDate, resetAll } = useProgress()
+  const { state, loading, sync, stats, toggleDay, setNote, setStartDate, resetAll, refresh } = useProgress()
   const [tab, setTab] = useState('home')
   const [focusWeek, setFocusWeek] = useState(null)
   const [focusDayId, setFocusDayId] = useState(null)
@@ -92,6 +94,7 @@ export default function App() {
             )}
             {tab === 'reference' && <Reference />}
             {tab === 'certificate' && <Certificate stats={stats} />}
+            {tab === 'mentor' && <MentorView state={state} stats={stats} sync={sync} refresh={refresh} />}
             {tab === 'settings' && <Settings state={state} setStartDate={setStartDate} resetAll={resetAll} />}
           </>
         )}
