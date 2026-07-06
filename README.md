@@ -8,7 +8,7 @@ a live progress ring, week-by-week bars, a day streak, and a completion certific
 Built with **React + Vite**. Deploys to **Vercel** in one click. Progress saves to
 the browser automatically, and optionally **syncs across devices via Supabase**.
 
-**Live app:** _add your Vercel URL here after deploying_
+**Live app:** https://sravya-internship.vercel.app/
 
 ---
 
